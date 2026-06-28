@@ -3,17 +3,26 @@
  * Date: 06/14/2026
  * File Name: app.js
  * Description: Express application for the Cookbook App project. Sets up
- *              the server, landing page route, and error handling middleware.
+ *              the server, landing page route, recipes API route, and
+ *              error handling middleware.
  */
 "use strict";
 
+// Import Express to create the application and define routes
 const express = require("express");
+// Import bcryptjs for future password hashing functionality
 const bcrypt = require("bcryptjs");
+// Import http-errors to create standardized HTTP error objects
 const createError = require("http-errors");
+// Import the mock database module containing recipe data
+const recipes = require("../database/recipes");
 
+// Create the Express application instance
 const app = express();
 
+// Middleware to parse incoming requests with JSON payloads
 app.use(express.json());
+// Middleware to parse incoming requests with URL-encoded payloads
 app.use(express.urlencoded({ extended: true }));
 
 // GET route for the root URL - displays the Cookbook App landing page
@@ -62,6 +71,40 @@ app.get("/", async (req, res, next) => {
   </html>
   `;
   res.send(html);
+});
+
+// GET endpoint that returns all recipes from the mock database
+app.get("/api/recipes", async (req, res, next) => {
+  try {
+    // Retrieve all recipes using the mock database's find() method
+    const allRecipes = await recipes.find();
+    console.log("All Recipes: ", allRecipes); // Logs all recipes to the console
+    res.send(allRecipes); // Sends the recipes array back to the client
+  } catch (err) {
+    console.error("Error: ", err.message); // Logs the error message to the console
+    next(err); // Passes the error to the next middleware (the error handler)
+  }
+});
+
+// GET endpoint that returns a single recipe by id from the mock database
+app.get("/api/recipes/:id", async (req, res, next) => {
+  try {
+    // Destructure the id from the route parameters
+    let { id } = req.params;
+    // Convert the id from a string to an integer
+    id = parseInt(id);
+    // If the id is not a valid number, pass a 400 error to the error handler
+    if (isNaN(id)) {
+      return next(createError(400, "Input must be a number"));
+    }
+    // Retrieve the recipe using the mock database's findOne() method
+    const recipe = await recipes.findOne({ id: Number(req.params.id) });
+    console.log("Recipe: ", recipe); // Logs the recipe to the console
+    res.send(recipe); // Sends the recipe back to the client
+  } catch (err) {
+    console.error("Error: ", err.message); // Logs the error message to the console
+    next(err); // Passes the error to the next middleware (the error handler)
+  }
 });
 
 // 404 error handler - catches all unmatched routes

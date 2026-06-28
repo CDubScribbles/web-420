@@ -3,11 +3,19 @@
  * Date: 06/14/2026
  * File Name: app.js
  * Description: Express application for the In-N-Out-Books project. Sets up
- *              the server, landing page route, and error handling middleware.
+ *              the server, landing page route, the books API routes, and
+ *              error handling middleware.
  */
 "use strict";
 
+// Import Express to create the application and define routes
 const express = require("express");
+// Import http-errors to create standardized HTTP error objects
+const createError = require("http-errors");
+// Import the mock database module containing book data
+const books = require("../database/books");
+
+// Create the Express application instance
 const app = express();
 
 app.use(express.json());
@@ -82,6 +90,40 @@ app.get("/", async (req, res, next) => {
   </html>
   `;
   res.send(html);
+});
+
+// GET endpoint that returns all books from the mock database
+app.get("/api/books", async (req, res, next) => {
+  try {
+    // Retrieve all books using the mock database's find() method
+    const allBooks = await books.find();
+    console.log("All Books: ", allBooks); // Logs all books to the console
+    res.send(allBooks); // Sends the books array back to the client
+  } catch (err) {
+    console.error("Error: ", err.message); // Logs the error message to the console
+    next(err); // Passes the error to the next middleware (the error handler)
+  }
+});
+
+// GET endpoint that returns a single book by id from the mock database
+app.get("/api/books/:id", async (req, res, next) => {
+  try {
+    // Destructure the id from the route parameters
+    let { id } = req.params;
+    // Convert the id from a string to an integer
+    id = parseInt(id);
+    // If the id is not a valid number, pass a 400 error to the error handler
+    if (isNaN(id)) {
+      return next(createError(400, "Input must be a number"));
+    }
+    // Retrieve the book using the mock database's findOne() method
+    const book = await books.findOne({ id: id });
+    console.log("Book: ", book); // Logs the book to the console
+    res.send(book); // Sends the book back to the client
+  } catch (err) {
+    console.error("Error: ", err.message); // Logs the error message to the console
+    next(err); // Passes the error to the next middleware (the error handler)
+  }
 });
 
 // 404 error handler - catches all unmatched routes
