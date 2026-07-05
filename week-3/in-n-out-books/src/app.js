@@ -126,6 +126,48 @@ app.get("/api/books/:id", async (req, res, next) => {
   }
 });
 
+// POST endpoint that adds a new book to the mock database
+app.post("/api/books", async (req, res, next) => {
+  try {
+    // Assign the request body (the new book) to a variable
+    const newBook = req.body;
+    // Check that the book has a title; if not, reject with a 400 error
+    if (!newBook.title) {
+      return next(createError(400, "Book title is required."));
+    }
+    // Insert the new book into the mock database using insertOne()
+    const result = await books.insertOne(newBook);
+    // Log the result for debugging purposes
+    console.log("Result: ", result);
+    // Send back a 201 status code along with the new book's id
+    res.status(201).send({ id: result.ops[0].id });
+  } catch (err) {
+    // Log any errors that occur
+    console.error("Error: ", err.message);
+    // Pass the error to the error-handling middleware
+    next(err);
+  }
+});
+
+// DELETE endpoint that removes a book by id from the mock database
+app.delete("/api/books/:id", async (req, res, next) => {
+  try {
+    // Destructure the id from the route parameters
+    const { id } = req.params;
+    // Call deleteOne() on the mock database, converting id to a number
+    const result = await books.deleteOne({ id: parseInt(id) });
+    // Log the result for debugging purposes
+    console.log("Result: ", result);
+    // Send back a 204 status code indicating successful deletion
+    res.status(204).send();
+  } catch (err) {
+    // Log any errors that occur
+    console.error("Error: ", err.message);
+    // Pass the error to the error-handling middleware
+    next(err);
+  }
+});
+
 // 404 error handler - catches all unmatched routes
 app.use((req, res, next) => {
   res.status(404).json({ message: "Not Found" });

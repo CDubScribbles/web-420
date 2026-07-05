@@ -107,6 +107,53 @@ app.get("/api/recipes/:id", async (req, res, next) => {
   }
 });
 
+// POST endpoint that adds a new recipe to the mock database
+app.post("/api/recipes", async (req, res, next) => {
+  try {
+    // Assign the request body (the new recipe) to a variable
+    const newRecipe = req.body;
+    // Define the only fields a valid recipe object is allowed to have
+    const expectedKeys = ["id", "name", "ingredients"];
+    // Get the actual fields sent in the request body
+    const receivedKeys = Object.keys(newRecipe);
+    // Check if the received fields don't match the expected fields exactly
+    if (!receivedKeys.every((key) => expectedKeys.includes(key)) || receivedKeys.length !== expectedKeys.length) {
+      // Reject the request with a 400 error if the shape doesn't match
+      return next(createError(400, "Bad Request"));
+    }
+    // Insert the new recipe into the mock database using insertOne()
+    const result = await recipes.insertOne(newRecipe);
+    // Log the result for debugging purposes
+    console.log("Result: ", result);
+    // Send back a 201 status code along with the new recipe's id
+    res.status(201).send({ id: result.ops[0].id });
+  } catch (err) {
+    // Log any errors that occur
+    console.error("Error: ", err.message);
+    // Pass the error to the error-handling middleware
+    next(err);
+  }
+});
+
+// DELETE endpoint that removes a recipe by id from the mock database
+app.delete("/api/recipes/:id", async (req, res, next) => {
+  try {
+    // Destructure the id from the route parameters
+    const { id } = req.params;
+    // Call deleteOne() on the mock database, converting id to a number
+    const result = await recipes.deleteOne({ id: parseInt(id) });
+    // Log the result for debugging purposes
+    console.log("Result: ", result);
+    // Send back a 204 status code indicating successful deletion
+    res.status(204).send();
+  } catch (err) {
+    // Log any errors that occur
+    console.error("Error: ", err.message);
+    // Pass the error to the error-handling middleware
+    next(err);
+  }
+});
+
 // 404 error handler - catches all unmatched routes
 app.use((req, res, next) => {
   next(createError(404));

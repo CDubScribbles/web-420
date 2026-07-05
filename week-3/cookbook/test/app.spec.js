@@ -50,3 +50,37 @@ describe("Chapter 3: API Tests", () => {
     expect(res.body.message).toEqual("Input must be a number");
   });
 });
+
+describe("Chapter 4: API Tests", () => {
+  // Test that the /api/recipes endpoint returns a 201 status when a new recipe is added
+  it("should return a 201 status code when adding a new recipe", async () => {
+    // Send a POST request to /api/recipes with a new recipe object and await the response
+    const res = await request(app).post("/api/recipes").send({
+      id: 99,
+      name: "Grilled Cheese",
+      ingredients: ["bread", "cheese", "butter"],
+    });
+    // Verify the response status code is 201 (Created)
+    expect(res.statusCode).toEqual(201);
+  });
+
+  // Test that adding a recipe with invalid or extra fields returns a 400 error
+  it("should return a 400 status code when adding a new recipe with missing or extra fields", async () => {
+    // Send a POST request with an object that doesn't match the expected recipe shape
+    const res = await request(app).post("/api/recipes").send({
+      invalidField: "invalidFieldValue",
+    });
+    // Verify the response status code is 400 (Bad Request)
+    expect(res.statusCode).toEqual(400);
+    // Verify the error message
+    expect(res.body.message).toEqual("Bad Request");
+  });
+
+  // Test that deleting an existing recipe returns a 204 status code
+  it("should return a 204 status code when deleting a recipe", async () => {
+    // Send a DELETE request to /api/recipes/99 and await the response
+    const res = await request(app).delete("/api/recipes/99");
+    // Verify the response status code is 204 (No Content)
+    expect(res.statusCode).toEqual(204);
+  });
+});

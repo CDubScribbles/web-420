@@ -45,3 +45,38 @@ describe("Chapter 3: API Tests", () => {
     expect(res.body.message).toEqual("Input must be a number");
   });
 });
+
+describe("Chapter 4: API Tests", () => {
+  // Test that a new book is successfully added and a 201 status is returned
+  it("should return a 201-status code when adding a new book", async () => {
+    // Send a POST request with a complete book object and await the response
+    const res = await request(app).post("/api/books").send({
+      id: 99,
+      title: "The Two Towers",
+      author: "J.R.R. Tolkien",
+    });
+    // Verify the response status code is 201 (Created)
+    expect(res.statusCode).toEqual(201);
+  });
+
+  // Test that adding a book without a title returns a 400 error
+  it("should return a 400-status code when adding a new book with missing title", async () => {
+    // Send a POST request that omits the required title field
+    const res = await request(app).post("/api/books").send({
+      id: 100,
+      author: "J.R.R. Tolkien",
+    });
+    // Verify the response status code is 400 (Bad Request)
+    expect(res.statusCode).toEqual(400);
+    // Verify the error message explains what's missing
+    expect(res.body.message).toEqual("Book title is required.");
+  });
+
+  // Test that deleting an existing book returns a 204 status
+  it("should return a 204-status code when deleting a book", async () => {
+    // Send a DELETE request for book id 1 and await the response
+    const res = await request(app).delete("/api/books/1");
+    // Verify the response status code is 204 (No Content)
+    expect(res.statusCode).toEqual(204);
+  });
+});
