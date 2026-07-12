@@ -168,6 +168,42 @@ app.delete("/api/books/:id", async (req, res, next) => {
   }
 });
 
+// PUT endpoint that updates an existing book by id in the mock database
+app.put("/api/books/:id", async (req, res, next) => {
+  try {
+    // Destructure the id from the route parameters
+    let { id } = req.params;
+    // Assign the request body (the updated book fields) to a variable
+    let book = req.body;
+    // Convert the id from a string to an integer
+    id = parseInt(id);
+    // If the id is not a valid number, respond with a 400 error
+    if (isNaN(id)) {
+      return next(createError(400, "Input must be a number"));
+    }
+    // Check that the book has a title; if not, reject with a 400 error
+    if (!book.title) {
+      return next(createError(400, "Bad Request"));
+    }
+    // Call updateOne() on the mock database, matching by id and applying the new fields
+    const result = await books.updateOne({ id: id }, book);
+    // Log the result for debugging purposes
+    console.log("Result: ", result);
+    // Send back a 204 status code indicating successful update
+    res.status(204).send();
+  } catch (err) {
+    // If updateOne() couldn't find a matching book, respond with a 404
+    if (err.message === "No matching item found") {
+      console.log("Book not found", err.message);
+      return next(createError(404, "Book not found"));
+    }
+    // Log any other unexpected errors
+    console.error("Error: ", err.message);
+    // Pass the error to the error-handling middleware
+    next(err);
+  }
+});
+
 // 404 error handler - catches all unmatched routes
 app.use((req, res, next) => {
   res.status(404).json({ message: "Not Found" });

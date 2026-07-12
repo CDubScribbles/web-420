@@ -154,6 +154,49 @@ app.delete("/api/recipes/:id", async (req, res, next) => {
   }
 });
 
+// PUT endpoint that updates an existing recipe by id in the mock database
+app.put("/api/recipes/:id", async (req, res, next) => {
+  try {
+    // Destructure the id from the route parameters
+    let { id } = req.params;
+    // Assign the request body (the updated recipe fields) to a variable
+    let recipe = req.body;
+    // Convert the id from a string to an integer
+    id = parseInt(id);
+    // If the id is not a valid number, respond with a 400 error
+    if (isNaN(id)) {
+      return next(createError(400, "Input must be a number"));
+    }
+    // Define the only fields a valid recipe object is allowed to have
+    const expectedKeys = ["name", "ingredients"];
+    // Get the actual fields sent in the request body
+    const receivedKeys = Object.keys(recipe);
+    // Check if the received fields don't match the expected fields exactly
+    if (!receivedKeys.every(key => expectedKeys.includes(key)) || receivedKeys.length !== expectedKeys.length) {
+      // Log the mismatch for debugging purposes
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      // Reject the request with a 400 error if the shape doesn't match
+      return next(createError(400, "Bad Request"));
+    }
+    // Call updateOne() on the mock database, matching by id and applying the new fields
+    const result = await recipes.updateOne({ id: id }, recipe);
+    // Log the result for debugging purposes
+    console.log("Result: ", result);
+    // Send back a 204 status code indicating successful update
+    res.status(204).send();
+  } catch (err) {
+    // If updateOne() couldn't find a matching recipe, respond with a 404
+    if (err.message === "No matching item found") {
+      console.log("Recipe not found", err.message)
+      return next(createError(404, "Recipe not found"));
+    }
+    // Log any other unexpected errors
+    console.error("Error: ", err.message);
+    // Pass the error to the error-handling middleware
+    next(err);
+  }
+});
+
 // 404 error handler - catches all unmatched routes
 app.use((req, res, next) => {
   next(createError(404));

@@ -84,3 +84,52 @@ describe("Chapter 4: API Tests", () => {
     expect(res.statusCode).toEqual(204);
   });
 });
+
+describe("Chapter 5: API Tests", () => {
+  // Test that a recipe is successfully updated and a 204 status is returned
+  it("should return a 204 status code when updating a recipe", async () => {
+    // Send a PUT request with updated recipe fields and await the response
+    const res = await request(app).put("/api/recipes/1").send({
+      name: "Pancakes",
+      ingredients: ["flour", "milk", "eggs", "sugar"],
+    });
+    // Verify the response status code is 204 (No Content)
+    expect(res.statusCode).toEqual(204);
+  });
+
+  // Test that a non-numeric id returns a 400 error instead of a 404
+  it("should return a 400 status code when updating a recipe with a non-numeric id", async () => {
+    // Send a PUT request with a non-numeric id and await the response
+    const res = await request(app).put("/api/recipes/foo").send({
+      name: "Test Recipe",
+      ingredients: ["test", "test"],
+    });
+    // Verify the response status code is 400 (Bad Request)
+      expect(res.statusCode).toEqual(400);
+    // Verify the error message explains the expected input
+      expect(res.body.message).toEqual("Input must be a number");
+  });
+
+  // Test that updating a recipe with missing keys or extra keys returns a 400 error
+  it("should return a 400 status code when updating a recipe with missing keys or extra keys", async () => {
+    // Send a PUT request with only a name field, missing the required ingredients field
+    const res = await request(app).put("/api/recipes/1").send({
+      name: "Test Recipe"
+    });
+    // Verify the response status code is 400 (Bad Request)
+    expect(res.statusCode).toEqual(400);
+    // Verify the error message
+    expect(res.body.message).toEqual("Bad Request");
+
+    // Send a second PUT request with a valid shape plus one extra, unexpected field
+    const res2 = await request(app).put("/api/recipes/1").send({
+      name: "Test Recipe",
+      ingredients: ["test", "test"],
+      extraKey: "extra"
+    });
+    // Verify the second response status code is also 400 (Bad Request)
+    expect(res2.statusCode).toEqual(400);
+    // Verify the error message is the same for this scenario
+    expect(res2.body.message).toEqual("Bad Request");
+  });
+});
