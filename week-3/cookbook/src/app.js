@@ -16,6 +16,8 @@ const bcrypt = require("bcryptjs");
 const createError = require("http-errors");
 // Import the mock database module containing recipe data
 const recipes = require("../database/recipes");
+// Import the mock database module containing user data
+const users = require("../database/users");
 
 // Create the Express application instance
 const app = express();
@@ -131,6 +133,53 @@ app.post("/api/recipes", async (req, res, next) => {
     // Log any errors that occur
     console.error("Error: ", err.message);
     // Pass the error to the error-handling middleware
+    next(err);
+  }
+});
+
+// POST endpoint that registers a new user in the mock database
+app.post("/api/register", async (req, res, next) => {
+  console.log("Request body: ", req.body);
+  try {
+    // Assign the request body to a variable
+    const user = req.body;
+    // Define the only fields a valid registration is allowed to have
+    const expectedKeys = ["email", "password"];
+    // Get the actual fields sent in the request body
+    const receivedKeys = Object.keys(user);
+    // Check if the received fields don't match the expected fields exactly
+    if (!receivedKeys.every((key) => expectedKeys.includes(key)) || receivedKeys.length !== expectedKeys.length) {
+      // Log the mismatch for debugging purposes
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      // Reject the request with a 400 error if the shape doesn't match
+      return next(createError(400, "Bad Request"));
+    }
+    // Attempt to find an existing user with this email; if none, findOne rejects
+    let duplicateUser;
+    try {
+      duplicateUser = await users.findOne({ email: user.email });
+    } catch (err) {
+      // No matching user found, so there's no duplicate
+      duplicateUser = null;
+    }
+    // If a matching user was found, reject the request with a 409 error
+    if (duplicateUser) {
+      console.error("Conflict: User already exists");
+      return next(createError(409, "Conflict"));
+    }
+    // Hash the password using bcryptjs with 10 salt rounds
+    const hashedPassword = bcrypt.hashSync(user.password, 10);
+    // Insert the new user into the mock database with the hashed password
+    const newUser = await users.insertOne({
+      email: user.email,
+      password: hashedPassword,
+    });
+    // Send back a 200 status code along with the new user and a success message
+    res.status(200).send({ user: newUser, message: "Registration successful" });
+  } catch (err) {
+    // Log any errors that occur
+    console.error("Error: ", err);
+    console.error("Error: ", err.message);
     next(err);
   }
 });

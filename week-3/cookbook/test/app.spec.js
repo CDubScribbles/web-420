@@ -133,3 +133,59 @@ describe("Chapter 5: API Tests", () => {
     expect(res2.body.message).toEqual("Bad Request");
   });
 });
+
+describe("Chapter 6: API Tests", () => {
+  // Test that a new user can register and a 200 status with success message is returned
+  it("should return a 200 status code with a message of 'Registration successful' when registering a new user", async () => {
+    // Send a POST request with a valid email and password and await the response
+    const res = await request(app).post("/api/register").send({
+      email: "cedric@hogwarts.edu",
+      password: "diggory",
+    });
+    // Verify the response status code is 200 (OK)
+    expect(res.statusCode).toEqual(200);
+    // Verify the success message
+    expect(res.body.message).toEqual("Registration successful");
+  });
+
+  // Test that registering with an already-used email returns a 409 Conflict
+  it("should return a 409 status code with a message of 'Conflict' when registering a user with a duplicate email", async () => {
+    // Register a user once
+    await request(app).post("/api/register").send({
+      email: "duplicate@hogwarts.edu",
+      password: "test123",
+    });
+    // Attempt to register the same email a second time
+    const res = await request(app).post("/api/register").send({
+      email: "duplicate@hogwarts.edu",
+      password: "test123",
+    });
+    // Verify the response status code is 409 (Conflict)
+    expect(res.statusCode).toEqual(409);
+    // Verify the error message
+    expect(res.body.message).toEqual("Conflict");
+  });
+
+  // Test that registering with too many or too few parameter values returns a 400 error
+  it("should return a 400 status code when registering a new user with too many or too few parameter values", async () => {
+    // Send a request with an extra, unexpected field; using Luna because Cedric is already registered in the previous test
+    const res = await request(app).post("/api/register").send({
+      email: "luna@hogwarts.edu",
+      password: "lovegood",
+      extraKey: "extra",
+    });
+    // Verify the response status code is 400 (Bad Request)
+    expect(res.statusCode).toEqual(400);
+    // Verify the error message
+    expect(res.body.message).toEqual("Bad Request");
+
+    // Send a second request missing the required password field
+    const res2 = await request(app).post("/api/register").send({
+      email: "luna@hogwarts.edu",
+    });
+    // Verify the second response status code is also 400 (Bad Request)
+    expect(res2.statusCode).toEqual(400);
+    // Verify the error message is the same for this scenario
+    expect(res2.body.message).toEqual("Bad Request");
+  });
+});

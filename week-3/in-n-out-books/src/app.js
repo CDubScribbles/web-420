@@ -14,6 +14,10 @@ const express = require("express");
 const createError = require("http-errors");
 // Import the mock database module containing book data
 const books = require("../database/books");
+// Import bcryptjs to hash and compare user passwords
+const bcrypt = require("bcryptjs");
+// Import the mock database module containing user data
+const users = require("../database/users");
 
 // Create the Express application instance
 const app = express();
@@ -198,6 +202,33 @@ app.put("/api/books/:id", async (req, res, next) => {
       return next(createError(404, "Book not found"));
     }
     // Log any other unexpected errors
+    console.error("Error: ", err.message);
+    // Pass the error to the error-handling middleware
+    next(err);
+  }
+});
+
+// POST endpoint that logs a user in using their email and password
+app.post("/api/login", async (req, res, next) => {
+  try {
+    // Destructure email and password from the request body
+    const { email, password } = req.body;
+    // If either field is missing, respond with a 400 error
+    if (!email || !password) {
+      return next(createError(400, "Bad Request"));
+    }
+    // Look up the user by email in the mock database
+    const user = await users.findOne({ email: email });
+    // Compare the submitted password against the stored hash
+    const passwordIsValid = bcrypt.compareSync(password, user.password);
+    // If the password doesn't match, respond with a 401 error
+    if (!passwordIsValid) {
+      return next(createError(401, "Unauthorized"));
+    }
+    // Send back a 200 status code with a success message
+    res.status(200).send({ message: "Authentication successful" });
+  } catch (err) {
+    // Log any errors that occur
     console.error("Error: ", err.message);
     // Pass the error to the error-handling middleware
     next(err);

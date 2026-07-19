@@ -118,3 +118,43 @@ describe("Chapter 5: API Tests", () => {
     expect(res.body.message).toEqual("Bad Request");
   });
 });
+
+describe("Chapter 6: API Tests", () => {
+  // Test that a user can log in successfully and a 200 status is returned
+  it("should log a user in and return a 200-status with 'Authentication successful' message", async () => {
+    // Send a POST request with valid login credentials
+    const res = await request(app).post("/api/login").send({
+      email: "harry@hogwarts.edu",
+      password: "potter",
+    });
+    // Verify the response status code is 200 (OK)
+    expect(res.statusCode).toEqual(200);
+    // Verify the success message
+    expect(res.body.message).toEqual("Authentication successful");
+  });
+
+  // Test that logging in with the wrong password returns a 401 error
+  it("should return a 401-status code with 'Unauthorized' message when logging in with incorrect credentials", async () => {
+    // Send a POST request with an incorrect password
+    const res = await request(app).post("/api/login").send({
+      email: "harry@hogwarts.edu",
+      password: "wrongpassword",
+    });
+    // Verify the response status code is 401 (Unauthorized)
+    expect(res.statusCode).toEqual(401);
+    // Verify the error message
+    expect(res.body.message).toEqual("Unauthorized");
+  });
+
+  // Test that logging in with a missing email or password returns a 400 error
+  it("should return a 400-status code with 'Bad Request' when missing email or password", async () => {
+    // Send a POST request missing the password field
+    const res = await request(app).post("/api/login").send({
+      email: "harry@hogwarts.edu",
+    });
+    // Verify the response status code is 400 (Bad Request)
+    expect(res.statusCode).toEqual(400);
+    // Verify the error message
+    expect(res.body.message).toEqual("Bad Request");
+  });
+});
